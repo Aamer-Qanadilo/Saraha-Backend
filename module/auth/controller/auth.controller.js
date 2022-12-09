@@ -35,6 +35,7 @@ export const signup = async (req, res) => {
           token,
           message,
           emailPurpose: "confirm your email address",
+          req,
         });
         // await myEmail({ email, token, message });
         res.status(201).json({ message: "success", saveUser });
@@ -75,6 +76,10 @@ export const verifyEmail = async (req, res) => {
   try {
     const { token } = req.params;
     jwt.verify(token, "jsonemailconfirm", async (error, decoded) => {
+      if (!decoded) {
+        res.json({ message: "expired, please request new one." });
+        return;
+      }
       let user = await userModel.findOne({ email: decoded.email });
 
       if (user) {
@@ -84,7 +89,7 @@ export const verifyEmail = async (req, res) => {
         );
         res.json({ message: "done verify your email" });
       } else {
-        res.jsno({ message: "your email not found" });
+        res.json({ message: "your email not found" });
       }
     });
   } catch (error) {
@@ -118,6 +123,7 @@ export const refreshToken = async (req, res) => {
           token,
           message,
           emailPurpose: "confirm your email address",
+          req,
         });
         // let message = `<a href="${link}" target="_blank" style="display: inline-block; padding: 16px 36px; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; font-size: 16px; color: #ffffff; text-decoration: none; border-radius: 6px;">verify email</a>`;
         // await myEmail({ email, token, message });
@@ -141,6 +147,7 @@ export const sendCode = async (req, res) => {
       email,
       message,
       emailPurpose: "Access Code to change your password",
+      req,
     });
 
     // let message = `<h2>access code : ${accessCode}</h2>`;
@@ -155,7 +162,7 @@ export const forgetPassword = async (req, res) => {
   if (!user) {
     res.json({ message: "In-valid account or In-valid OTP Code" });
   } else {
-    bcrypt.hash(password, 8, async function (err, hash) {
+    bcrypt.hash(password, 5, async function (err, hash) {
       await userModel.updateOne(
         { _id: user._id },
         { code: null, password: hash },
